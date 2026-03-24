@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --page-bg: #f2eee7;
+  --page-accent: #143042;
+  --page-accent-soft: #8c4f2b;
+  --panel: rgba(255, 251, 245, 0.92);
+  --panel-strong: rgba(255, 248, 238, 0.98);
+  --surface-soft: rgba(255, 255, 255, 0.58);
+  --surface-strong: rgba(255, 255, 255, 0.78);
+  --surface-overlay: rgba(20, 48, 66, 0.34);
+  --line: rgba(20, 48, 66, 0.12);
+  --line-strong: rgba(140, 79, 43, 0.32);
+  --text: #143042;
+  --muted: #6b655d;
+  --success: #0d684f;
+  --warning: #ad6b00;
+  --danger: #a12844;
+  --shadow: 0 24px 60px rgba(20, 48, 66, 0.15);
+  --page-fill: #efe8dc;
+  font-family:
+    "IBM Plex Sans",
+    "Avenir Next",
+    "Segoe UI",
+    sans-serif;
+}
+
+html[data-mode='dark'] {
+  color-scheme: dark;
+  --page-bg: #161214;
+  --page-accent: #f3b27b;
+  --page-accent-soft: #8fc7df;
+  --panel: rgba(14, 18, 25, 0.84);
+  --panel-strong: rgba(20, 26, 35, 0.96);
+  --surface-soft: rgba(255, 255, 255, 0.04);
+  --surface-strong: rgba(255, 255, 255, 0.08);
+  --surface-overlay: rgba(5, 8, 13, 0.6);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.2);
+  --text: #edf3f5;
+  --muted: rgba(237, 243, 245, 0.68);
+  --success: #5bdaa9;
+  --warning: #ffcf73;
+  --danger: #ff7f95;
+  --shadow: 0 26px 70px rgba(0, 0, 0, 0.38);
+  --page-fill: #0d1118;
+}
+
+html {
+  min-height: 100%;
+  background: var(--page-fill);
+  color: var(--text);
+}
+
+body {
+  min-height: 100vh;
+}
+
+textarea,
+input,
+select,
+button {
+  font: inherit;
+}
+
+.app-text-button {
+  color: var(--page-accent);
+  font-weight: 500;
+  transition: color 160ms ease;
+}
+
+.app-text-button:hover {
+  color: var(--page-accent-soft);
+  font-weight: 700;
+}
+
+.app-text-button:disabled {
+  color: var(--muted);
+  font-weight: 500;
+  opacity: 0.55;
+}
+
+.app-pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  padding: 0.32rem 0.65rem;
+  font-size: 0.75rem;
+  color: var(--page-accent);
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.app-pill:hover {
+  color: var(--page-accent-soft);
+  border-color: var(--line-strong);
+  background: var(--surface-strong);
+}
+
+.grain {
+  background-color: var(--page-fill);
+}
