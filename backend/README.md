@@ -1,16 +1,18 @@
 # Backend setup
 
-The backend is a FastAPI service for transcription, refinement, and translation.
-It is designed to run locally with your own Ollama and Whisper stack.
+This FastAPI service powers:
+
+- transcription through local `faster-whisper`
+- transcript refinement through Ollama
+- English to Japanese translation through Ollama
+- readiness checks for the local-first frontend
 
 ## Prerequisites
 
-Install:
-
 - Python 3.10+
-- Ollama ([official download](https://ollama.com/download))
+- Ollama: [official download](https://ollama.com/download)
 
-## 1) Create a virtual environment
+## 1. Create the virtual environment
 
 From the repository root:
 
@@ -22,37 +24,42 @@ pip install -r requirements.txt
 cp .env.example .env
 ```
 
-## 2) Start Ollama and pull a model
+## 2. Start Ollama and install the configured model
 
 ```bash
 ollama serve
 ollama pull llama3.1:8b
 ```
 
-Ollama runs at `http://127.0.0.1:11434` by default.
+By default the backend expects Ollama at `http://127.0.0.1:11434`.
 
-If you want to use a different model, update `LLM_MODEL` in `.env`.
+If you change the model name, update `LLM_MODEL` in `.env`.
 
-## 3) Start the FastAPI server
+## 3. Start the API
 
 ```bash
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
-The backend also uses local Whisper via `faster-whisper`.
-Default transcription and model settings are in `.env.example`.
+## 4. Verify health and readiness
 
-## 4) Verify health endpoints
-
-In a new terminal:
+In another terminal:
 
 ```bash
 curl http://127.0.0.1:8001/health
 curl http://127.0.0.1:8001/health/llm
 curl http://127.0.0.1:8001/health/whisper
+curl http://127.0.0.1:8001/health/readiness
 ```
 
-## 5) Start the frontend
+`/health/readiness` is the most complete local-first check. It reports:
+
+- API reachability
+- Ollama reachability
+- whether the configured Ollama model is installed
+- whether Whisper can load successfully
+
+## 5. Start the frontend
 
 From the repository root:
 
@@ -61,14 +68,42 @@ pnpm install
 pnpm dev
 ```
 
-Or run everything together from the root:
+Or use the recommended one-command flow:
 
 ```bash
 pnpm dev:local
 ```
 
-## Notes
+## Troubleshooting
 
-- For local development, CORS allows `localhost` and `127.0.0.1` origins.
-- To target a different backend URL in the frontend, set `VITE_API_BASE_URL`.
-- If you change backend CORS settings in `.env`, restart `uvicorn`.
+If `/health/llm` fails:
+
+- confirm Ollama is running
+- confirm `LLM_BASE_URL` points to the right host
+- confirm the configured model exists with `ollama list`
+
+If `/health/whisper` fails:
+
+- confirm `faster-whisper` installed inside `.venv`
+- confirm `WHISPER_MODEL` is valid in `.env`
+- restart `uvicorn` after config changes
+
+If refinement or translation says the model is missing:
+
+```bash
+ollama pull llama3.1:8b
+```
+
+If CORS fails in local development:
+
+- keep the frontend on `localhost` or `127.0.0.1`
+- update `CORS_ORIGINS` or `CORS_ORIGIN_REGEX` in `.env`
+- restart `uvicorn`
+
+## Tests
+
+Run the backend API tests with the standard library test runner:
+
+```bash
+.venv/bin/python -m unittest discover -s tests
+```

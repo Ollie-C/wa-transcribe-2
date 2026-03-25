@@ -5,6 +5,8 @@
     sourceText,
     translation,
     processing,
+    canTranslate = true,
+    disabledReason = '',
     onTranslate,
     onCancel,
     onInput
@@ -12,6 +14,8 @@
     sourceText: string;
     translation: string;
     processing: StageState;
+    canTranslate?: boolean;
+    disabledReason?: string;
     onTranslate: () => void;
     onCancel: () => void;
     onInput: (value: string) => void;
@@ -20,7 +24,7 @@
 
 <div class="space-y-4">
   <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
-    <button class="app-text-button" type="button" disabled={!sourceText.trim() || processing.status === 'running'} onclick={onTranslate}>
+    <button class="app-text-button" type="button" disabled={!sourceText.trim() || processing.status === 'running' || !canTranslate} onclick={onTranslate}>
       {processing.status === 'running' ? 'Translating…' : 'Translate'}
     </button>
     {#if processing.status === 'running'}
@@ -28,11 +32,22 @@
         Cancel
       </button>
     {/if}
-    <span class="text-xs text-[color:var(--muted)]">{processing.message || 'Ready'}</span>
+    <span class="text-xs text-[color:var(--muted)]">
+      {#if !canTranslate && disabledReason}
+        {disabledReason}
+      {:else if processing.message}
+        {processing.message}
+      {:else if translation.trim()}
+        Translation ready to review and export.
+      {:else}
+        Translate the latest approved English text into Japanese.
+      {/if}
+    </span>
   </div>
 
   <textarea
     class="min-h-[18rem] w-full rounded-[0.9rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--text)] outline-none transition focus:border-[color:var(--page-accent)]"
+    aria-label="Japanese translation"
     placeholder="Japanese output appears here after translation."
     value={translation}
     oninput={(event) => onInput((event.currentTarget as HTMLTextAreaElement).value)}

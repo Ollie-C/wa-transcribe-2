@@ -48,6 +48,7 @@ fi
 
 if ! curl -fsS "$OLLAMA_URL/api/tags" >/dev/null 2>&1; then
   echo "Starting Ollama..."
+  echo "Ollama logs: /tmp/wa-transcribe-ollama.log"
   ollama serve >/tmp/wa-transcribe-ollama.log 2>&1 &
   OLLAMA_STARTED_BY_SCRIPT="1"
   sleep 3
@@ -70,10 +71,14 @@ BACKEND_PID=$!
 sleep 2
 
 if ! curl -fsS "$API_URL/health" >/dev/null 2>&1; then
-  echo "Backend did not become healthy. Check /tmp/wa-transcribe-backend.log"
+  echo "Backend did not become healthy."
+  echo "Check /tmp/wa-transcribe-backend.log"
+  echo "If Ollama was started by this script, also check /tmp/wa-transcribe-ollama.log"
   exit 1
 fi
 
+echo "Backend is healthy at $API_URL"
+echo "Open the app and use the Setup status card if Whisper or Ollama still need attention."
 echo "Starting frontend..."
 cd "$ROOT_DIR"
 VITE_API_BASE_URL="$API_URL" pnpm dev

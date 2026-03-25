@@ -64,6 +64,22 @@ button {
   font: inherit;
 }
 
+button,
+textarea,
+input,
+select {
+  outline: none;
+}
+
+button:focus-visible,
+textarea:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 3px rgba(140, 79, 43, 0.18);
+  outline: 2px solid var(--page-accent-soft);
+  outline-offset: 2px;
+}
+
 .app-text-button {
   color: var(--page-accent);
   font-weight: 500;
@@ -98,6 +114,44 @@ button {
   color: var(--page-accent-soft);
   border-color: var(--line-strong);
   background: var(--surface-strong);
+}
+
+.app-primary-button {
+  border-radius: 999px;
+  background: var(--page-accent);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.72rem 1rem;
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.app-primary-button:hover {
+  background: var(--page-accent-soft);
+  transform: translateY(-1px);
+}
+
+.app-primary-button:disabled {
+  background: var(--muted);
+  transform: none;
+  opacity: 0.72;
+}
+
+.setup-card--ready {
+  border-color: color-mix(in srgb, var(--success) 28%, transparent);
+  background: color-mix(in srgb, var(--success) 8%, var(--panel));
+}
+
+.setup-card--checking {
+  border-color: color-mix(in srgb, var(--warning) 28%, transparent);
+  background: color-mix(in srgb, var(--warning) 8%, var(--panel));
+}
+
+.setup-card--warning {
+  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, var(--panel));
 }
 
 .grain {

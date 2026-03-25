@@ -6,6 +6,8 @@ export type ModelStatus = 'idle' | 'loading' | 'ready' | 'error';
 export type StageStatus = 'idle' | 'running' | 'success' | 'error';
 export type CorrectionMode = 'exact' | 'fuzzy' | 'instruction';
 export type DiffSegmentType = 'equal' | 'insert' | 'delete';
+export type ReadinessState = 'ready' | 'offline' | 'missing' | 'unavailable';
+export type SetupState = 'checking' | 'ready' | 'backend-offline' | 'ollama-offline' | 'model-missing' | 'whisper-unavailable';
 
 export interface AudioSourceMetadata {
   name: string;
@@ -116,6 +118,7 @@ export interface PipelineState {
 }
 
 export interface PersistedSession {
+  version: number;
   step: PipelineStep;
   audioSource: AudioSourceMetadata | null;
   rawTranscript: string;
@@ -149,4 +152,34 @@ export interface TranscriptionResult {
 export interface ModelProgressUpdate {
   progress: number | null;
   message: string;
+}
+
+export interface StoredEnvelope<T> {
+  version: number;
+  data: T;
+}
+
+export interface DependencyReadiness {
+  ready: boolean;
+  status: ReadinessState;
+  detail: string;
+}
+
+export interface BackendReadinessResponse {
+  status: 'ready' | 'degraded';
+  api: DependencyReadiness;
+  ollama: DependencyReadiness;
+  llm_model: DependencyReadiness;
+  whisper: DependencyReadiness;
+}
+
+export interface SetupStatus {
+  state: SetupState;
+  title: string;
+  message: string;
+  hint: string;
+  checkedAt: string | null;
+  canTranscribe: boolean;
+  canUseLlm: boolean;
+  readiness: BackendReadinessResponse | null;
 }

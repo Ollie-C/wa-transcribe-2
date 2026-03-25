@@ -6,6 +6,7 @@
     processing,
     onInput,
     canTranscribe,
+    disabledReason = '',
     onTranscribe,
     onCancel
   }: {
@@ -13,6 +14,7 @@
     processing: StageState;
     onInput: (value: string) => void;
     canTranscribe: boolean;
+    disabledReason?: string;
     onTranscribe: () => void;
     onCancel: () => void;
   } = $props();
@@ -29,13 +31,24 @@
           Cancel
         </button>
       {/if}
-      <span class="text-xs text-[color:var(--muted)]">{processing.message || 'Ready'}</span>
+      <span class="text-xs text-[color:var(--muted)]">
+        {#if !canTranscribe && disabledReason}
+          {disabledReason}
+        {:else if processing.message}
+          {processing.message}
+        {:else if value.trim()}
+          Transcript ready to review and edit.
+        {:else}
+          Upload or record audio, then run a local transcription.
+        {/if}
+      </span>
     </div>
   </div>
 
   <textarea
     class="min-h-[18rem] w-full rounded-[0.9rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 text-sm leading-6 text-[color:var(--text)] outline-none transition focus:border-[color:var(--page-accent)]"
-    placeholder="Transcript"
+    aria-label="Transcript"
+    placeholder="Your English transcript appears here. You can also paste or edit text manually."
     value={value}
     oninput={(event) => onInput((event.currentTarget as HTMLTextAreaElement).value)}
   ></textarea>

@@ -48,6 +48,9 @@
       <button class="truncate text-left text-sm font-semibold text-[color:var(--text)] transition hover:text-[color:var(--page-accent-soft)]" type="button" onclick={() => onOpenTarget(currentTarget)}>
         {currentTitle}
       </button>
+      <p class="mt-1 text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">
+        Current export target: {currentTarget === 'raw' ? 'Transcript' : currentTarget === 'refined' ? 'Refined' : 'Translated'}
+      </p>
       <div class="mt-1 flex flex-wrap items-center gap-2">
         <button class="app-pill" type="button" onclick={() => onOpenTarget('raw')}>Transcript</button>
         {#if currentHasRefined}

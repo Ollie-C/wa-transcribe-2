@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { tick } from 'svelte';
+
   let {
     open,
     title,
@@ -12,6 +14,36 @@
     onClose: () => void;
     onCopy: () => void;
   } = $props();
+
+  let closeButton = $state<HTMLButtonElement | null>(null);
+  let previousFocusedElement: HTMLElement | null = null;
+
+  $effect(() => {
+    if (!open) {
+      return;
+    }
+
+    previousFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+
+    void tick().then(() => {
+      closeButton?.focus();
+    });
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeydown);
+      previousFocusedElement?.focus();
+      previousFocusedElement = null;
+    };
+  });
 </script>
 
 {#if open}
@@ -20,15 +52,16 @@
     <div
       role="dialog"
       aria-modal="true"
+      aria-labelledby="transcript-modal-title"
       class="max-h-[82vh] w-full max-w-3xl overflow-hidden rounded-[1.25rem] border border-[color:var(--line)] bg-[color:var(--panel)] shadow-[var(--shadow)]"
     >
       <div class="flex items-center justify-between gap-3 border-b border-[color:var(--line)] px-4 py-3">
-        <h2 class="text-sm font-semibold text-[color:var(--text)]">{title}</h2>
+        <h2 id="transcript-modal-title" class="text-sm font-semibold text-[color:var(--text)]">{title}</h2>
         <div class="flex items-center gap-4">
           <button class="app-text-button text-sm" type="button" onclick={onCopy} aria-label="Copy text">
             Copy
           </button>
-          <button class="app-text-button text-sm" type="button" onclick={onClose} aria-label="Close transcript">
+          <button bind:this={closeButton} class="app-text-button text-sm" type="button" onclick={onClose} aria-label="Close transcript">
             Close
           </button>
         </div>

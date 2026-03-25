@@ -1,4 +1,5 @@
 export const APP_TITLE = 'WA Transcribe 2';
+export const STORAGE_SCHEMA_VERSION = 1;
 export const SESSION_STORAGE_KEY = 'wa-transcribe-2/session';
 export const UPLOAD_HISTORY_STORAGE_KEY = 'wa-transcribe-2/upload-history';
 export const TRANSCRIPT_HISTORY_STORAGE_KEY = 'wa-transcribe-2/transcript-history';

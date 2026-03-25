@@ -3,16 +3,33 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 from tempfile import NamedTemporaryFile
-
-from faster_whisper import WhisperModel
+from typing import TYPE_CHECKING, Any
 
 from .settings import settings
 
-_model: WhisperModel | None = None
+if TYPE_CHECKING:
+    from faster_whisper import WhisperModel
+
+_model: Any | None = None
 _model_lock = asyncio.Lock()
 
 
-async def get_whisper_model() -> WhisperModel:
+def _create_whisper_model() -> 'WhisperModel':
+    try:
+        from faster_whisper import WhisperModel
+    except ModuleNotFoundError as exc:
+        raise RuntimeError('faster-whisper is not installed. Reinstall backend requirements and restart the API.') from exc
+
+    return WhisperModel(
+        settings.whisper_model,
+        device=settings.whisper_device,
+        compute_type=settings.whisper_compute_type,
+        cpu_threads=settings.whisper_cpu_threads,
+        num_workers=settings.whisper_num_workers,
+    )
+
+
+async def get_whisper_model() -> 'WhisperModel':
     global _model
 
     if _model is not None:
@@ -20,13 +37,7 @@ async def get_whisper_model() -> WhisperModel:
 
     async with _model_lock:
         if _model is None:
-            _model = WhisperModel(
-                settings.whisper_model,
-                device=settings.whisper_device,
-                compute_type=settings.whisper_compute_type,
-                cpu_threads=settings.whisper_cpu_threads,
-                num_workers=settings.whisper_num_workers,
-            )
+            _model = _create_whisper_model()
 
     return _model
 

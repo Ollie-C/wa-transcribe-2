@@ -96,10 +96,15 @@
 
 <div class="space-y-4">
   <div class="rounded-[1rem] border border-dashed border-[color:var(--line)] bg-[color:var(--surface-soft)] p-4">
+    <p class="mb-3 text-sm leading-6 text-[color:var(--muted)]">
+      Audio stays on this machine. Upload a WhatsApp voice note or record a quick sample to start.
+    </p>
+
     <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
       <input
         bind:this={fileInput}
         class="hidden"
+        aria-label="Upload audio file"
         type="file"
         accept="audio/*,.opus"
         onchange={onFileChange}
@@ -108,6 +113,7 @@
       <button
         class="app-text-button"
         type="button"
+        aria-label="Upload audio"
         onclick={() => fileInput?.click()}
       >
         Upload
@@ -117,6 +123,7 @@
         <button
           class="app-text-button text-[color:var(--danger)] hover:text-[color:var(--danger)]"
           type="button"
+          aria-label="Stop recording"
           onclick={stopRecording}
         >
           Stop
@@ -125,6 +132,7 @@
         <button
           class="app-text-button"
           type="button"
+          aria-label="Record audio"
           onclick={startRecording}
         >
           Record

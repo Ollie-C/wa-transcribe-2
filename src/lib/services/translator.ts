@@ -1,4 +1,5 @@
-import { LOCAL_API_BASE_URL, REFINEMENT_CHUNK_SIZE } from '$lib/config';
+import { LOCAL_API_BASE_URL, TRANSLATION_CHUNK_SIZE } from '$lib/config';
+import { normalizeRequestError, readErrorDetail } from '$lib/services/api';
 import type { ModelProgressUpdate, TranslationResult } from '$lib/types';
 import { splitTextIntoChunks } from '$lib/utils/chunking';
 
@@ -14,7 +15,7 @@ export async function translateTranscript(
   signal?: AbortSignal,
   callbacks: TranslatorCallbacks = {}
 ): Promise<TranslationResult> {
-  const chunks = splitTextIntoChunks(text, { maxChars: REFINEMENT_CHUNK_SIZE });
+  const chunks = splitTextIntoChunks(text, { maxChars: TRANSLATION_CHUNK_SIZE });
   const translatedChunks: string[] = [];
 
   for (const [index, chunk] of chunks.entries()) {
@@ -23,21 +24,26 @@ export async function translateTranscript(
       message: `Translating chunk ${index + 1} of ${chunks.length}`
     });
 
-    const response = await fetch(`${LOCAL_API_BASE_URL}/api/translate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: chunk,
-        instructions: TRANSLATION_INSTRUCTIONS
-      }),
-      signal
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${LOCAL_API_BASE_URL}/api/translate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: chunk,
+          instructions: TRANSLATION_INSTRUCTIONS
+        }),
+        signal
+      });
+    } catch (error) {
+      throw new Error(normalizeRequestError(error, 'Translation could not reach the local backend.'));
+    }
 
     if (!response.ok) {
-      const details = await response.text();
-      throw new Error(`Translation failed (${response.status}): ${details || 'No error details returned.'}`);
+      const detail = await readErrorDetail(response);
+      throw new Error(detail || `Translation failed (${response.status}).`);
     }
 
     const json = (await response.json()) as { text?: string };

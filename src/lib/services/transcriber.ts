@@ -1,4 +1,5 @@
 import { LOCAL_API_BASE_URL, TRANSCRIPTION_LANGUAGE } from '$lib/config';
+import { normalizeRequestError, readErrorDetail } from '$lib/services/api';
 import type { ModelProgressUpdate, TranscriptionResult } from '$lib/types';
 
 interface TranscriberCallbacks {
@@ -19,11 +20,16 @@ export async function transcribeAudio(
   formData.append('file', file, file instanceof File ? file.name : 'recording.webm');
   formData.append('language', TRANSCRIPTION_LANGUAGE);
 
-  const response = await fetch(`${LOCAL_API_BASE_URL}/api/transcribe`, {
-    method: 'POST',
-    body: formData,
-    signal
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${LOCAL_API_BASE_URL}/api/transcribe`, {
+      method: 'POST',
+      body: formData,
+      signal
+    });
+  } catch (error) {
+    throw new Error(normalizeRequestError(error, 'Transcription could not reach the local backend.'));
+  }
 
   callbacks.onModelProgress?.({
     progress: 0.8,
@@ -31,8 +37,8 @@ export async function transcribeAudio(
   });
 
   if (!response.ok) {
-    const details = await response.text();
-    throw new Error(`Transcription failed (${response.status}): ${details || 'No error details returned.'}`);
+    const detail = await readErrorDetail(response);
+    throw new Error(detail || `Transcription failed (${response.status}).`);
   }
 
   const result = (await response.json()) as {

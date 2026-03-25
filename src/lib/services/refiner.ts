@@ -1,4 +1,5 @@
 import { LOCAL_API_BASE_URL, REFINEMENT_CHUNK_SIZE } from '$lib/config';
+import { normalizeRequestError, readErrorDetail } from '$lib/services/api';
 import type { CorrectionRule, ModelProgressUpdate, RefinementResult } from '$lib/types';
 import { splitTextIntoChunks } from '$lib/utils/chunking';
 import { normalizeForMatch } from '$lib/utils/text';
@@ -60,22 +61,27 @@ export async function refineTranscript(
       message: `Refining chunk ${index + 1} of ${chunks.length}`
     });
 
-    const response = await fetch(`${LOCAL_API_BASE_URL}/api/refine`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        text: chunk,
-        instructions: SYSTEM_PROMPT,
-        context: buildContext(contextRules)
-      }),
-      signal
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${LOCAL_API_BASE_URL}/api/refine`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: chunk,
+          instructions: SYSTEM_PROMPT,
+          context: buildContext(contextRules)
+        }),
+        signal
+      });
+    } catch (error) {
+      throw new Error(normalizeRequestError(error, 'Refinement could not reach the local backend.'));
+    }
 
     if (!response.ok) {
-      const details = await response.text();
-      throw new Error(`Refinement failed (${response.status}): ${details || 'No error details returned.'}`);
+      const detail = await readErrorDetail(response);
+      throw new Error(detail || `Refinement failed (${response.status}).`);
     }
 
     const json = (await response.json()) as {

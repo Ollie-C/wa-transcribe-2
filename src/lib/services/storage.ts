@@ -1,7 +1,7 @@
 import { browser } from '$app/environment';
 
-import { SESSION_STORAGE_KEY, TRANSCRIPT_HISTORY_STORAGE_KEY, UPLOAD_HISTORY_STORAGE_KEY } from '$lib/config';
-import type { PersistedSession, PipelineState, TranscriptHistoryItem, UploadHistoryItem } from '$lib/types';
+import { SESSION_STORAGE_KEY, STORAGE_SCHEMA_VERSION, TRANSCRIPT_HISTORY_STORAGE_KEY, UPLOAD_HISTORY_STORAGE_KEY } from '$lib/config';
+import type { PersistedSession, PipelineState, StoredEnvelope, TranscriptHistoryItem, UploadHistoryItem } from '$lib/types';
 
 const AUDIO_DB_NAME = 'wa-transcribe-2-db';
 const AUDIO_STORE_NAME = 'audio-blobs';
@@ -33,6 +33,7 @@ function safeParse<T>(value: string | null): T | null {
 
 function toPersistedSession(state: PipelineState): PersistedSession {
   return {
+    version: STORAGE_SCHEMA_VERSION,
     step: state.step,
     audioSource: state.audioSource,
     rawTranscript: state.rawTranscript,
@@ -47,6 +48,31 @@ function toPersistedSession(state: PipelineState): PersistedSession {
     exportTarget: state.exportTarget,
     timestamps: state.timestamps
   };
+}
+
+function wrapStoredValue<T>(data: T): StoredEnvelope<T> {
+  return {
+    version: STORAGE_SCHEMA_VERSION,
+    data
+  };
+}
+
+function unwrapStoredValue<T>(value: string | null): T | null {
+  const parsed = safeParse<StoredEnvelope<T> | T>(value);
+  if (!parsed) {
+    return null;
+  }
+
+  if (typeof parsed === 'object' && parsed !== null && 'version' in parsed && 'data' in parsed) {
+    const envelope = parsed as StoredEnvelope<T>;
+    if (typeof envelope.version !== 'number' || envelope.version > STORAGE_SCHEMA_VERSION) {
+      return null;
+    }
+
+    return envelope.data;
+  }
+
+  return parsed as T;
 }
 
 function openAudioDatabase(): Promise<IDBDatabase> {
@@ -100,14 +126,22 @@ export function createBrowserStorageAdapter(): StorageAdapter {
         return null;
       }
 
-      return safeParse<PersistedSession>(localStorage.getItem(SESSION_STORAGE_KEY));
+      const session = unwrapStoredValue<PersistedSession>(localStorage.getItem(SESSION_STORAGE_KEY));
+      if (!session) {
+        return null;
+      }
+
+      return {
+        ...session,
+        version: session.version ?? STORAGE_SCHEMA_VERSION
+      };
     },
     saveSession(state) {
       if (!browser) {
         return;
       }
 
-      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(toPersistedSession(state)));
+      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(wrapStoredValue(toPersistedSession(state))));
     },
     clearSession() {
       if (!browser) {
@@ -121,28 +155,28 @@ export function createBrowserStorageAdapter(): StorageAdapter {
         return [];
       }
 
-      return safeParse<UploadHistoryItem[]>(localStorage.getItem(UPLOAD_HISTORY_STORAGE_KEY)) ?? [];
+      return unwrapStoredValue<UploadHistoryItem[]>(localStorage.getItem(UPLOAD_HISTORY_STORAGE_KEY)) ?? [];
     },
     saveUploadHistory(items) {
       if (!browser) {
         return;
       }
 
-      localStorage.setItem(UPLOAD_HISTORY_STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(UPLOAD_HISTORY_STORAGE_KEY, JSON.stringify(wrapStoredValue(items)));
     },
     loadTranscriptHistory() {
       if (!browser) {
         return [];
       }
 
-      return safeParse<TranscriptHistoryItem[]>(localStorage.getItem(TRANSCRIPT_HISTORY_STORAGE_KEY)) ?? [];
+      return unwrapStoredValue<TranscriptHistoryItem[]>(localStorage.getItem(TRANSCRIPT_HISTORY_STORAGE_KEY)) ?? [];
     },
     saveTranscriptHistory(items) {
       if (!browser) {
         return;
       }
 
-      localStorage.setItem(TRANSCRIPT_HISTORY_STORAGE_KEY, JSON.stringify(items));
+      localStorage.setItem(TRANSCRIPT_HISTORY_STORAGE_KEY, JSON.stringify(wrapStoredValue(items)));
     },
     async saveAudioBlob(id, blob) {
       await withAudioStore<void>('readwrite', (store, resolve, reject) => {

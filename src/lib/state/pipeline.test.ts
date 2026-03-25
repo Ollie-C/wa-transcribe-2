@@ -7,6 +7,7 @@ vi.mock('$app/environment', () => ({
 import { PipelineController } from '$lib/state/pipeline.svelte';
 import type { StorageAdapter } from '$lib/services/storage';
 import type { CorrectionRule, PersistedSession, PipelineState } from '$lib/types';
+import { STORAGE_SCHEMA_VERSION } from '$lib/config';
 
 function buildStorage(overrides: Partial<StorageAdapter> = {}): StorageAdapter {
   return {
@@ -26,6 +27,7 @@ function buildStorage(overrides: Partial<StorageAdapter> = {}): StorageAdapter {
 
 function buildInitialSession(): PersistedSession {
   return {
+    version: STORAGE_SCHEMA_VERSION,
     step: 'refinement',
     audioSource: null,
     rawTranscript: 'Persisted raw',

@@ -11,6 +11,8 @@
     diffSegments,
     correctionState,
     refinementState,
+    canRefine = true,
+    refinementUnavailableMessage = '',
     onInstructionInput,
     onApplyCorrections,
     onToggleSuggestion,
@@ -27,6 +29,8 @@
     diffSegments: DiffSegment[];
     correctionState: StageState;
     refinementState: StageState;
+    canRefine?: boolean;
+    refinementUnavailableMessage?: string;
     onInstructionInput: (value: string) => void;
     onApplyCorrections: () => void;
     onToggleSuggestion: (id: string) => void;
@@ -55,7 +59,7 @@
         <button
           class="app-text-button"
           type="button"
-          disabled={!currentText.trim() || refinementState.status === 'running'}
+          disabled={!currentText.trim() || refinementState.status === 'running' || !canRefine}
           onclick={onRefine}
         >
           {refinementState.status === 'running' ? 'Refining…' : 'Refine'}
@@ -70,13 +74,18 @@
 
     <textarea
       class="min-h-[8rem] w-full rounded-[0.9rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-3 text-sm leading-6 text-[color:var(--text)] outline-none transition focus:border-[color:var(--page-accent)]"
+      aria-label="Refinement instructions"
       placeholder={"One instruction per line\nremove repetition\nKommy -> Gomi\nKomi ~> Gomi"}
       value={instructionText}
       oninput={(event) => onInstructionInput((event.currentTarget as HTMLTextAreaElement).value)}
     ></textarea>
 
     <p class="mt-2 text-xs text-[color:var(--muted)]">
-      {refinementState.error || correctionState.message || refinementState.message || 'Use freeform cleanup notes or direct replacements.'}
+      {#if !canRefine && refinementUnavailableMessage}
+        {refinementUnavailableMessage}
+      {:else}
+        {refinementState.error || correctionState.message || refinementState.message || 'Use freeform cleanup notes or direct replacements.'}
+      {/if}
     </p>
 
     {#if suggestions.length > 0}
@@ -120,7 +129,8 @@
     </div>
     <textarea
       class="min-h-[14rem] w-full rounded-[0.9rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-3 text-sm leading-6 text-[color:var(--text)] outline-none transition focus:border-[color:var(--page-accent)]"
-      placeholder="Refined text"
+      aria-label="Refined text"
+      placeholder="Refined English text appears here after local cleanup or Llama refinement."
       value={refinedText}
       oninput={(event) => onRefinedInput((event.currentTarget as HTMLTextAreaElement).value)}
     ></textarea>

@@ -5,13 +5,15 @@
   import PanelShell from '$lib/components/PanelShell.svelte';
   import RefinementPanel from '$lib/components/RefinementPanel.svelte';
   import SessionDrawer from '$lib/components/SessionDrawer.svelte';
+  import SetupStatusCard from '$lib/components/SetupStatusCard.svelte';
   import TranscriptModal from '$lib/components/TranscriptModal.svelte';
   import TranscriptPanel from '$lib/components/TranscriptPanel.svelte';
   import TranslationPanel from '$lib/components/TranslationPanel.svelte';
   import { APP_TITLE } from '$lib/config';
+  import { createCheckingSetupStatus, loadSetupStatus } from '$lib/services/readiness';
   import { pipeline } from '$lib/state/pipeline.svelte';
   import { theme } from '$lib/state/theme.svelte';
-  import type { AudioSourceMetadata, ExportTarget, TranscriptHistoryItem } from '$lib/types';
+  import type { AudioSourceMetadata, ExportTarget, SetupStatus, TranscriptHistoryItem } from '$lib/types';
   import { buildMarkdownExport, createFileStem, getExportContent } from '$lib/utils/export';
 
   const controller = pipeline;
@@ -24,11 +26,25 @@
   let modalOpen = $state(false);
   let modalTitle = $state('');
   let modalBody = $state('');
+  let modalTarget = $state<ExportTarget | null>(null);
+  let setupStatus = $state<SetupStatus>(createCheckingSetupStatus());
+  let setupStatusLoading = $state(false);
+  let setupStatusRequest: AbortController | null = null;
 
   onMount(() => {
     controller.hydrate();
     theme.hydrate();
+
+    void refreshSetupStatus();
+
+    return () => {
+      setupStatusRequest?.abort();
+    };
   });
+
+  function targetLabel(target: ExportTarget): string {
+    return target === 'raw' ? 'transcript' : target === 'refined' ? 'refined text' : 'Japanese translation';
+  }
 
   function downloadFile(filename: string, content: string, mimeType: string): void {
     const blob = new Blob([content], { type: mimeType });
@@ -47,28 +63,68 @@
     }, 2400);
   }
 
+  async function refreshSetupStatus(): Promise<void> {
+    setupStatusRequest?.abort();
+    const request = new AbortController();
+    setupStatusRequest = request;
+    setupStatusLoading = true;
+    setupStatus = createCheckingSetupStatus();
+
+    try {
+      setupStatus = await loadSetupStatus(request.signal);
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
+
+      setupStatus = {
+        ...createCheckingSetupStatus(),
+        state: 'backend-offline',
+        title: 'Start the local backend first',
+        message: error instanceof Error ? error.message : 'The local backend is unavailable.',
+        hint: 'Run `pnpm dev:local`, then retry this setup check.',
+        checkedAt: new Date().toISOString()
+      };
+    } finally {
+      if (setupStatusRequest === request) {
+        setupStatusLoading = false;
+      }
+    }
+  }
+
   async function copyModal(): Promise<void> {
     if (!modalBody.trim()) {
       return;
     }
 
-    await navigator.clipboard.writeText(modalBody);
-    flashMessage('Copied text.');
+    try {
+      await navigator.clipboard.writeText(modalBody);
+      flashMessage(`Copied ${targetLabel(modalTarget ?? pipelineState.exportTarget)}.`);
+    } catch {
+      flashMessage('Copy failed. Try selecting the text manually.');
+    }
   }
 
   function exportTxt(): void {
     const content = getExportContent(pipelineState, pipelineState.exportTarget).trim();
     if (!content) {
-      flashMessage('There is nothing to export for the selected target yet.');
+      flashMessage(`There is nothing to export from ${targetLabel(pipelineState.exportTarget)} yet.`);
       return;
     }
 
     downloadFile(`${createFileStem(pipelineState.audioSource?.name)}-${pipelineState.exportTarget}.txt`, content, 'text/plain;charset=utf-8');
+    flashMessage(`Downloaded ${targetLabel(pipelineState.exportTarget)} as a .txt file.`);
   }
 
   function exportMarkdown(): void {
     const content = buildMarkdownExport(pipelineState);
+    if (!content.trim()) {
+      flashMessage('There is nothing to export yet.');
+      return;
+    }
+
     downloadFile(`${createFileStem(pipelineState.audioSource?.name)}-bundle.md`, content, 'text/markdown;charset=utf-8');
+    flashMessage('Downloaded the full transcript bundle as Markdown.');
   }
 
   function selectAudio(file: File | Blob, metadata: AudioSourceMetadata): void {
@@ -86,6 +142,7 @@
     controller.setExportTarget(target);
     modalTitle = `${pipelineState.audioSource?.name ?? 'Current session'} · ${target === 'raw' ? 'Transcript' : target === 'refined' ? 'Refined' : 'Translated'}`;
     modalBody = content;
+    modalTarget = target;
     modalOpen = true;
   }
 
@@ -99,6 +156,7 @@
 
     modalTitle = `${item.title} · ${target === 'raw' ? 'Transcript' : target === 'refined' ? 'Refined' : 'Translated'}`;
     modalBody = content;
+    modalTarget = target;
     modalOpen = true;
   }
 </script>
@@ -113,21 +171,24 @@
 
 <div class="grain min-h-screen">
   <div class="mx-auto max-w-[62rem] px-4 pb-32 pt-4 sm:px-6">
-    <header class="mb-4 flex items-end justify-between gap-4 border-b border-[color:var(--line)] pb-4">
-      <div>
-        <h1 class="text-xl font-semibold tracking-tight text-[color:var(--text)]">{APP_TITLE}</h1>
-        <p class="text-xs text-[color:var(--muted)]">Upload, transcribe, refine, translate.</p>
+    <header class="mb-5 flex flex-col gap-4 border-b border-[color:var(--line)] pb-5 lg:flex-row lg:items-end lg:justify-between">
+      <div class="max-w-2xl">
+        <h1 class="text-2xl font-semibold tracking-tight text-[color:var(--text)]">{APP_TITLE}</h1>
+        <p class="mt-2 text-sm text-[color:var(--muted)]">
+          Local transcription for quick voice notes.
+        </p>
       </div>
-      <div class="flex max-w-[34rem] flex-col items-end gap-2">
+      <div class="flex max-w-[34rem] flex-col items-start gap-2 lg:items-end">
         <button class="app-text-button" type="button" onclick={() => theme.toggleMode()}>
           {themeState.mode === 'light' ? 'Dark mode' : 'Light mode'}
         </button>
-        <p class="text-right text-xs text-[color:var(--muted)]">{pipelineState.modelStatus.whisper.message}</p>
       </div>
     </header>
 
     <div class="space-y-4">
-      <PanelShell eyebrow="1" title="Upload" description="Choose a file or record audio.">
+      <SetupStatusCard status={setupStatus} retrying={setupStatusLoading} onRetry={refreshSetupStatus} />
+
+      <PanelShell eyebrow="1" title="Upload" description="Choose a file or record audio. Everything stays local to this browser session and backend.">
         <AudioInput
           audioSource={pipelineState.audioSource}
           recentUploads={pipelineState.uploadHistory}
@@ -138,11 +199,16 @@
         />
       </PanelShell>
 
-      <PanelShell eyebrow="2" title="Transcribe" description="Transcripts save automatically.">
+      <PanelShell
+        eyebrow="2"
+        title="Transcribe"
+        description={setupStatus.canTranscribe ? 'Transcripts save automatically, and you can edit the text immediately.' : 'Transcription will unlock here once the setup status above is fully ready.'}
+      >
         <TranscriptPanel
           value={pipelineState.rawTranscript}
           processing={pipelineState.processing.transcription}
-          canTranscribe={Boolean(pipelineState.audioSource)}
+          canTranscribe={Boolean(pipelineState.audioSource) && setupStatus.canTranscribe}
+          disabledReason={!setupStatus.canTranscribe ? setupStatus.message : ''}
           onTranscribe={() => {
             void controller.transcribe();
             section3Collapsed = false;
@@ -156,7 +222,13 @@
       <PanelShell
         eyebrow="3"
         title="Refine"
-        description={!pipelineState.rawTranscript.trim() ? 'Available after a transcript is generated.' : 'Cleanup rules and local refinement.'}
+        description={
+          !pipelineState.rawTranscript.trim()
+            ? 'Available after a transcript is generated.'
+            : setupStatus.canUseLlm
+              ? 'Local cleanup rules plus optional bounded Llama refinement.'
+              : 'Local cleanup rules are available now. Llama refinement unlocks after the setup status is ready.'
+        }
         collapsible={pipelineState.rawTranscript.trim().length > 0}
         collapsed={!pipelineState.rawTranscript.trim() || section3Collapsed}
         onToggle={() => {
@@ -174,6 +246,8 @@
           diffSegments={pipelineState.refinementDiff}
           correctionState={pipelineState.processing.correction}
           refinementState={pipelineState.processing.refinement}
+          canRefine={setupStatus.canUseLlm}
+          refinementUnavailableMessage={!setupStatus.canUseLlm ? setupStatus.message : ''}
           onInstructionInput={(value) => controller.setInstructionText(value)}
           onApplyCorrections={() => controller.applyCorrections()}
           onToggleSuggestion={(id) => controller.toggleSuggestion(id)}
@@ -187,7 +261,13 @@
       <PanelShell
         eyebrow="4"
         title="Translate"
-        description={!pipelineState.rawTranscript.trim() ? 'Available after a transcript is generated.' : 'Japanese translation from the latest approved English text.'}
+        description={
+          !pipelineState.rawTranscript.trim()
+            ? 'Available after a transcript is generated.'
+            : setupStatus.canUseLlm
+              ? 'Japanese translation from the latest approved English text.'
+              : 'Translation unlocks after Ollama and the configured model are ready.'
+        }
         collapsible={pipelineState.rawTranscript.trim().length > 0}
         collapsed={!pipelineState.rawTranscript.trim() || section4Collapsed}
         onToggle={() => {
@@ -200,6 +280,8 @@
           sourceText={pipelineState.refinedTranscript || controller.getWorkingEnglishText()}
           translation={pipelineState.translation}
           processing={pipelineState.processing.translation}
+          canTranslate={setupStatus.canUseLlm}
+          disabledReason={!setupStatus.canUseLlm ? setupStatus.message : ''}
           onTranslate={() => controller.translate()}
           onCancel={() => controller.cancelStage('translation')}
           onInput={(value) => controller.updateTranslation(value)}
@@ -237,7 +319,10 @@
     open={modalOpen}
     title={modalTitle}
     body={modalBody}
-    onClose={() => (modalOpen = false)}
+    onClose={() => {
+      modalOpen = false;
+      modalTarget = null;
+    }}
     onCopy={copyModal}
   />
 </div>
