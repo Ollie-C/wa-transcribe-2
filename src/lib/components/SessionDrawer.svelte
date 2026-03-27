@@ -75,7 +75,7 @@
   {#if expanded && previousItems.length > 0}
     <div class="mt-3 grid gap-2 border-t border-[color:var(--line)] pt-3">
       {#each previousItems as item}
-        <div class="flex flex-col gap-2 rounded-[0.9rem] border border-[color:var(--line)] bg-[color:var(--surface-soft)] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col gap-2 rounded-[0.9rem] px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
           <div class="min-w-0">
             <button class="truncate text-left text-sm font-medium text-[color:var(--text)] transition hover:text-[color:var(--page-accent-soft)]" type="button" onclick={() => onOpenHistory(item, availableTarget(item))}>
               {item.title}

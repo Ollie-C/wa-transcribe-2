@@ -8,6 +8,8 @@
     "dev": "vite dev",
     "dev:local": "bash ./scripts/dev-local.sh",
     "build": "svelte-kit sync && vite build",
+    "build:hosted": "VITE_USE_RELATIVE_API=true svelte-kit sync && vite build",
+    "serve:hosted": "bash ./scripts/run-hosted.sh",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "svelte-kit sync && vitest run",
@@ -16,7 +18,8 @@
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
     "diff": "^7.0.0",
-    "fuse.js": "^7.1.0"
+    "fuse.js": "^7.1.0",
+    "lucide-svelte": "^1.0.1"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",

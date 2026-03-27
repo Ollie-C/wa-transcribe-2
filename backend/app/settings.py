@@ -2,6 +2,15 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from pathlib import Path
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _split_origins(value: str) -> list[str]:
@@ -25,10 +34,25 @@ class Settings:
     whisper_compute_type: str = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
     whisper_cpu_threads: int = int(os.getenv("WHISPER_CPU_THREADS", "4"))
     whisper_num_workers: int = int(os.getenv("WHISPER_NUM_WORKERS", "1"))
+    serve_frontend_from_backend: bool = _env_bool("SERVE_FRONTEND_FROM_BACKEND", False)
+    frontend_build_dir: str = os.getenv(
+        "FRONTEND_BUILD_DIR",
+        str(Path(__file__).resolve().parents[2] / "build"),
+    )
+    max_upload_mb: int = int(os.getenv("MAX_UPLOAD_MB", "25"))
+    max_text_input_chars: int = int(os.getenv("MAX_TEXT_INPUT_CHARS", "16000"))
 
     def __post_init__(self) -> None:
         origins = _split_origins(os.getenv("CORS_ORIGINS", "http://127.0.0.1:5173,http://localhost:5173"))
         object.__setattr__(self, "cors_origins", origins)
+
+    @property
+    def frontend_build_path(self) -> Path:
+        return Path(self.frontend_build_dir).expanduser().resolve()
+
+    @property
+    def max_upload_bytes(self) -> int:
+        return max(1, self.max_upload_mb) * 1024 * 1024
 
 
 settings = Settings()

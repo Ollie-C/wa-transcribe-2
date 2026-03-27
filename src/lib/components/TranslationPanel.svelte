@@ -32,17 +32,7 @@
         Cancel
       </button>
     {/if}
-    <span class="text-xs text-[color:var(--muted)]">
-      {#if !canTranslate && disabledReason}
-        {disabledReason}
-      {:else if processing.message}
-        {processing.message}
-      {:else if translation.trim()}
-        Translation ready to review and export.
-      {:else}
-        Translate the latest approved English text into Japanese.
-      {/if}
-    </span>
+
   </div>
 
   <textarea

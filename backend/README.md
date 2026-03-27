@@ -41,6 +41,13 @@ If you change the model name, update `LLM_MODEL` in `.env`.
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
 ```
 
+For the Cloudflare-protected hosted mode, use the root script instead so FastAPI serves the built frontend too:
+
+```bash
+cd ..
+pnpm serve:hosted
+```
+
 ## 4. Verify health and readiness
 
 In another terminal:
@@ -99,6 +106,14 @@ If CORS fails in local development:
 - keep the frontend on `localhost` or `127.0.0.1`
 - update `CORS_ORIGINS` or `CORS_ORIGIN_REGEX` in `.env`
 - restart `uvicorn`
+
+For hosted mode behind Cloudflare Tunnel:
+
+- keep `APP_HOST=127.0.0.1`
+- set `SERVE_FRONTEND_FROM_BACKEND=true`
+- point `FRONTEND_BUILD_DIR` at the built frontend output if you override the default
+- use Cloudflare Access at the edge instead of building app-level login
+- use `MAX_UPLOAD_MB` and `MAX_TEXT_INPUT_CHARS` to keep the origin bounded
 
 ## Tests
 

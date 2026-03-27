@@ -507,8 +507,8 @@ export class PipelineController {
     }
   }
 
-  async translate(): Promise<void> {
-    const input = this.state.refinedTranscript || this.getWorkingEnglishText();
+  async translate(inputOverride?: string): Promise<void> {
+    const input = inputOverride ?? (this.state.refinedTranscript || this.getWorkingEnglishText());
     if (!input.trim()) {
       this.#setStageError('translation', 'There is no English transcript text to translate.');
       return;

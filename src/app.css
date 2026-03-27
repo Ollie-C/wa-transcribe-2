@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 :root {
   color-scheme: light;
@@ -19,11 +19,7 @@
   --danger: #a12844;
   --shadow: 0 24px 60px rgba(20, 48, 66, 0.15);
   --page-fill: #efe8dc;
-  font-family:
-    "IBM Plex Sans",
-    "Avenir Next",
-    "Segoe UI",
-    sans-serif;
+  font-family: 'IBM Plex Sans', 'Avenir Next', 'Segoe UI', sans-serif;
 }
 
 html[data-mode='dark'] {
@@ -97,6 +93,41 @@ select:focus-visible {
   opacity: 0.55;
 }
 
+.app-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: var(--page-accent);
+  transition:
+    color 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.app-icon-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.app-icon-button:hover {
+  color: var(--page-accent-soft);
+  border-color: var(--line-strong);
+  background: var(--surface-strong);
+  transform: translateY(-1px);
+}
+
+.app-icon-button:disabled {
+  color: var(--muted);
+  opacity: 0.55;
+  transform: none;
+}
+
 .app-pill {
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -156,4 +187,186 @@ select:focus-visible {
 
 .grain {
   background-color: var(--page-fill);
+}
+
+.app-panel__title {
+  position: absolute;
+  top: 1rem;
+  left: 2rem;
+  margin: 0;
+  font-size: clamp(3.2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.92;
+  color: color-mix(in srgb, var(--page-accent) 41%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+
+.cassette-card {
+  position: relative;
+  width: min(100%, 20rem);
+  justify-self: center;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.cassette-svg-shell {
+  border-radius: 1.5rem;
+  padding: 0.9rem;
+}
+
+.cassette-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cassette-body path {
+  fill: color-mix(in srgb, var(--page-accent) 78%, var(--panel-strong));
+}
+
+.cassette-fasteners path {
+  fill: color-mix(in srgb, var(--page-accent-soft) 44%, var(--surface-strong));
+}
+
+.cassette-reel {
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+.cassette-reel__outer {
+  fill: color-mix(in srgb, var(--page-accent) 88%, var(--surface-strong));
+}
+
+.cassette-reel__inner {
+  fill: color-mix(in srgb, var(--page-accent-soft) 64%, var(--surface-strong));
+}
+
+.cassette-status {
+  display: grid;
+  gap: 0.22rem;
+  padding-inline: 0.2rem;
+}
+
+.cassette-status__eyebrow {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--page-accent);
+}
+
+.cassette-status__copy {
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.cassette-card:not(.cassette-card--loaded) .cassette-svg-shell {
+  opacity: 0.74;
+}
+
+.cassette-card--loaded .cassette-svg-shell {
+  transform: translateY(-1px);
+}
+
+.cassette-card--recording .cassette-svg-shell {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 18px 34px color-mix(in srgb, var(--danger) 14%, rgba(20, 48, 66, 0.08));
+}
+
+.cassette-card--recording .cassette-reel__inner {
+  fill: color-mix(in srgb, var(--danger) 58%, var(--surface-strong));
+}
+
+.cassette-card--transcribing .cassette-reel--left {
+  animation: reel-spin 1.25s linear infinite;
+  transform-origin: 146.5px 242.8px;
+  will-change: transform;
+}
+
+.cassette-card--transcribing .cassette-reel--right {
+  animation: reel-spin 1s linear infinite reverse;
+  transform-origin: 365.5px 242.8px;
+  will-change: transform;
+}
+
+.cassette-card--transcribing .cassette-svg-shell {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 18px 34px
+      color-mix(in srgb, var(--page-accent-soft) 18%, rgba(20, 48, 66, 0.08));
+}
+
+.volume-meter {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.volume-meter__bars {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 0.05rem;
+  height: 3rem;
+  max-width: 200px;
+}
+
+.volume-meter__bar {
+  display: block;
+  flex: 0 0 0.22rem;
+  height: calc(0.65rem + (1.5rem * var(--meter-height)));
+  border-radius: 999px;
+  transform-origin: bottom center;
+  background: color-mix(in srgb, var(--muted) 30%, transparent);
+  opacity: 0.45;
+}
+
+.volume-meter__bar--active {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--page-accent-soft) 74%, white),
+    color-mix(in srgb, var(--page-accent) 84%, transparent)
+  );
+  opacity: 1;
+  animation: meter-bounce 0.9s ease-in-out infinite;
+  animation-delay: var(--meter-delay);
+}
+
+.volume-meter__caption {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+@keyframes reel-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes meter-bounce {
+  0%,
+  100% {
+    transform: scaleY(0.45);
+    opacity: 0.72;
+  }
+
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cassette-card--transcribing .cassette-reel--left,
+  .cassette-card--transcribing .cassette-reel--right,
+  .volume-meter__bar--active {
+    animation: none;
+  }
 }

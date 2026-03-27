@@ -53,11 +53,11 @@
 </script>
 
 <section
-  class="rounded-[1rem] border border-[color:var(--line)] bg-[color:var(--panel)] px-4 py-3 shadow-[var(--shadow)]"
+  class="rounded-[1rem] px-2 py-0"
   aria-live="polite"
 >
   <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs">
       {#each stageItems as item}
         <div class="flex items-center gap-2 text-[color:var(--text)]" title={item.detail}>
           <span

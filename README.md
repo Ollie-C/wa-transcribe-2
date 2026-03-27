@@ -55,6 +55,16 @@ pnpm dev:local
 
 The first run can take a few minutes because local models may need to download or warm up.
 
+## Cloudflare-Protected Hosted Mode
+
+Build and run the hosted mode locally with:
+
+```bash
+pnpm serve:hosted
+```
+
+That keeps the origin on `127.0.0.1` and is intended to sit behind `cloudflared`.
+
 ## Confirm Everything Is Ready
 
 Open the app in your browser and check the **Setup status** card at the top of the page.
@@ -114,6 +124,7 @@ Backend:
 
 - copy `backend/.env.example` to `backend/.env`
 - adjust `LLM_MODEL`, `WHISPER_MODEL`, or host/port values as needed
+- hosted mode adds `SERVE_FRONTEND_FROM_BACKEND`, `FRONTEND_BUILD_DIR`, `MAX_UPLOAD_MB`, and `MAX_TEXT_INPUT_CHARS`
 
 ## Quality Checks
 

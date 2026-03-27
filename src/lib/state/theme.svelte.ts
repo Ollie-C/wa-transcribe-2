@@ -9,7 +9,7 @@ type ThemeSettings = {
 };
 
 const DEFAULT_THEME: ThemeSettings = {
-  mode: 'light'
+  mode: 'dark'
 };
 
 function applyTheme(settings: ThemeSettings): void {

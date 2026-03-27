@@ -44,7 +44,7 @@
 </script>
 
 <div class="space-y-4">
-  <section class="rounded-[1rem] border border-[color:var(--line)] bg-[color:var(--surface-soft)] p-4">
+  <section class="rounded-[1rem] p-4">
     <div class="mb-3 flex items-center justify-between gap-3">
       <p class="text-sm font-semibold text-[color:var(--text)]">Instructions</p>
       <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -80,14 +80,6 @@
       oninput={(event) => onInstructionInput((event.currentTarget as HTMLTextAreaElement).value)}
     ></textarea>
 
-    <p class="mt-2 text-xs text-[color:var(--muted)]">
-      {#if !canRefine && refinementUnavailableMessage}
-        {refinementUnavailableMessage}
-      {:else}
-        {refinementState.error || correctionState.message || refinementState.message || 'Use freeform cleanup notes or direct replacements.'}
-      {/if}
-    </p>
-
     {#if suggestions.length > 0}
       <div class="mt-3 space-y-2 rounded-[0.9rem] border border-[color:var(--line)] bg-[color:var(--panel-strong)] p-3">
         <div class="flex items-center justify-between gap-3">
@@ -120,7 +112,7 @@
     {/if}
   </section>
 
-  <section class="rounded-[1rem] border border-[color:var(--line)] bg-[color:var(--surface-soft)] p-4">
+  <section class="rounded-[1rem] p-4">
     <div class="mb-2 flex items-center justify-between gap-3">
       <p class="text-sm font-semibold text-[color:var(--text)]">Refined text</p>
       {#if correctedText || currentText}
